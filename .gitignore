@@ -1,0 +1,8 @@
+.DS_Store
+node_modules/
+*.log
+
+# The readable dataset stays off GitHub: publishing it would make the
+# password pointless. Keep a local copy (and a private backup) so you can
+# re-encrypt with tools/build-vault.mjs.
+data/combinations.json

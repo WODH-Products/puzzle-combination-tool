@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="robots" content="noindex,nofollow">
+<title>Puzzle Combination Studio</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230b7355'/><g fill='%23fff'><rect x='7' y='7' width='7' height='7' rx='2'/><rect x='18' y='18' width='7' height='7' rx='2'/><rect x='18' y='7' width='7' height='7' rx='2' opacity='.45'/><rect x='7' y='18' width='7' height='7' rx='2' opacity='.45'/></g></svg>">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div class="gate" id="gate">
+  <form class="gate-card" id="gate-form" autocomplete="on">
+    <div class="gate-mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    <h1>Puzzle Combination Studio</h1>
+    <p class="sub">600 action &times; payoff combinations. Enter the password to unlock the library.</p>
+    <label class="field" for="password">
+      <span>Password</span>
+      <span class="pw-wrap">
+        <input id="password" name="password" type="password" autocomplete="current-password" required autofocus placeholder="Enter password">
+        <button type="button" class="btn btn-sm" id="toggle-pw" aria-label="Show password">Show</button>
+      </span>
+    </label>
+    <label class="check"><input type="checkbox" id="remember"> Keep me signed in on this device</label>
+    <button class="btn btn-primary" type="submit" id="unlock">Unlock</button>
+    <p class="gate-error" id="gate-error" role="alert"></p>
+    <p class="gate-foot">
+      The combination library is stored encrypted (AES-256-GCM, PBKDF2). The password is the decryption key, so
+      the text stays unreadable until it is entered correctly. Your favourites and notes are saved in this browser only.
+    </p>
+  </form>
+</div>
+
+<!-- ============ APP ============ -->
+<div class="app" id="app" hidden>
+
+  <header class="topbar">
+    <div class="brand"><strong>Puzzle Combination Studio</strong><span>30 actions &times; 20 payoffs</span></div>
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" data-view="browse" aria-selected="true">Browse</button>
+      <button class="tab" role="tab" data-view="favourites" aria-selected="false">Favourites<span class="pill" id="tab-fav-count"></span></button>
+      <button class="tab" role="tab" data-view="matrix" aria-selected="false">Matrix</button>
+      <button class="tab" role="tab" data-view="shuffle" aria-selected="false">Shuffle</button>
+    </div>
+    <button class="btn btn-sm btn-ghost" id="theme-btn" title="Switch theme">Theme</button>
+    <button class="btn btn-sm btn-ghost" id="help-btn" title="Keyboard shortcuts">?</button>
+    <button class="btn btn-sm btn-ghost" id="lock-btn" title="Lock the library">Lock</button>
+  </header>
+
+  <!-- Browse + Favourites -->
+  <section id="view-browse">
+    <div class="hero">
+      <p class="eyebrow" id="hero-eyebrow">Puzzle idea library</p>
+      <h2 id="hero-title">Action &times; payoff</h2>
+      <p id="hero-sub">Every player action paired with every visual payoff, each with a short idea for connecting the two.</p>
+    </div>
+
+    <div class="stats" id="stats"></div>
+
+    <div class="controls">
+      <label class="wide" for="query">Search ideas
+        <input id="query" type="search" placeholder="Try sand, cargo, thread, conveyor…" autocomplete="off" spellcheck="false">
+      </label>
+      <label for="action">Player action
+        <select id="action"><option value="">All 30 actions</option></select>
+      </label>
+      <label for="payoff">Visual payoff
+        <select id="payoff"><option value="">All 20 payoffs</option></select>
+      </label>
+      <label for="sort">Sort by
+        <select id="sort">
+          <option value="id">Number</option>
+          <option value="rating">Rating, high first</option>
+          <option value="recent">Recently saved</option>
+          <option value="action">Action name</option>
+          <option value="payoff">Payoff name</option>
+          <option value="random">Random</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="chipbar" id="chipbar">
+      <button class="chip" data-filter="fav" aria-pressed="false">&#9733; Favourites</button>
+      <button class="chip" data-filter="rated" aria-pressed="false">Rated</button>
+      <button class="chip" data-filter="noted" aria-pressed="false">Has notes</button>
+      <button class="chip" data-filter="unseen" aria-pressed="false">Not reviewed</button>
+      <button class="btn btn-sm btn-ghost" id="clear-filters" type="button">Clear all</button>
+    </div>
+
+    <div class="resultbar">
+      <p class="count" id="count"></p>
+      <div class="toolbtns">
+        <button class="btn btn-sm" id="view-toggle" type="button">List view</button>
+        <button class="btn btn-sm" id="export-btn" type="button">Export</button>
+        <button class="btn btn-sm" id="import-btn" type="button">Import</button>
+        <input type="file" id="import-file" accept="application/json" hidden>
+      </div>
+    </div>
+
+    <div class="grid" id="results"></div>
+
+    <div class="pager" id="pager">
+      <button class="btn btn-sm" data-page="prev" type="button">&larr; Previous</button>
+      <span class="pagenum" id="pagenum"></span>
+      <button class="btn btn-sm" data-page="next" type="button">Next &rarr;</button>
+      <select id="page-size" aria-label="Results per page" style="width:auto;min-width:110px">
+        <option value="24">24 per page</option>
+        <option value="48">48 per page</option>
+        <option value="96">96 per page</option>
+        <option value="600">Show all</option>
+      </select>
+    </div>
+  </section>
+
+  <!-- Matrix -->
+  <section id="view-matrix" hidden>
+    <div class="hero">
+      <p class="eyebrow">Coverage map</p>
+      <h2>The whole grid at a glance</h2>
+      <p>Thirty actions down, twenty payoffs across. Every square is one combination. Click a square to open it.</p>
+    </div>
+    <div class="legend">
+      <span><i style="background:var(--star);border-color:var(--star)"></i>Favourite</span>
+      <span><i style="background:var(--accent-soft);border-color:var(--accent)"></i>Rated</span>
+      <span><i style="background:var(--bg-tint)"></i>Has a note</span>
+      <span><i></i>Untouched</span>
+    </div>
+    <div class="matrix-wrap"><table class="matrix" id="matrix"></table></div>
+  </section>
+
+  <!-- Shuffle -->
+  <section id="view-shuffle" hidden>
+    <div class="hero">
+      <p class="eyebrow">Idea roulette</p>
+      <h2>Give me something to think about</h2>
+      <p>Pull a random combination from the set you have filtered, or from all 600.</p>
+    </div>
+    <div class="shuffle">
+      <div class="toolbtns">
+        <button class="btn" id="shuffle-btn" type="button">Shuffle a combination</button>
+        <button class="btn" id="shuffle-fav" type="button">&#9733; Save this one</button>
+        <button class="btn" id="shuffle-open" type="button">Open details</button>
+      </div>
+      <div class="shuffle-card" id="shuffle-card"></div>
+    </div>
+  </section>
+
+  <p class="footnote">
+    Favourites, ratings and notes live in this browser's local storage. Export them to keep a copy or move them to another machine.
+  </p>
+</div>
+
+<!-- ============ DETAIL MODAL ============ -->
+<dialog id="detail">
+  <div class="modal-head">
+    <p class="card-meta" id="d-meta"></p>
+    <h3 id="d-title" style="margin:0;font-size:22px;letter-spacing:-.03em;line-height:1.3"></h3>
+  </div>
+  <div class="modal-body">
+    <p id="d-idea" style="margin:0;font-size:16px"></p>
+    <p id="d-detail" style="margin:0;color:var(--muted);font-size:14px"></p>
+    <label class="field" style="margin:0" for="d-note"><span>Your notes</span>
+      <textarea id="d-note" placeholder="What would this feel like in the hand? What is the level goal? What breaks it?"></textarea>
+    </label>
+    <label class="field" style="margin:0" for="d-tags"><span>Tags, comma separated</span>
+      <input id="d-tags" type="text" placeholder="prototype, meta, hard, ad-friendly">
+    </label>
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <span style="font-size:13px;font-weight:600">Rating</span>
+      <span class="rate" id="d-rate"></span>
+      <button class="icon-btn fav-btn" id="d-fav" aria-pressed="false" type="button">&#9734; Favourite</button>
+    </div>
+  </div>
+  <div class="modal-foot">
+    <button class="btn btn-sm" id="d-prev" type="button">&larr; Previous</button>
+    <button class="btn btn-sm" id="d-next" type="button">Next &rarr;</button>
+    <span class="spacer"></span>
+    <button class="btn btn-sm" id="d-copy" type="button">Copy</button>
+    <button class="btn btn-sm btn-primary" id="d-close" type="button" style="width:auto">Done</button>
+  </div>
+</dialog>
+
+<!-- ============ HELP MODAL ============ -->
+<dialog id="help">
+  <div class="modal-head"><h3 style="margin:0;font-size:20px;letter-spacing:-.02em">Keyboard shortcuts</h3></div>
+  <div class="modal-body">
+    <div class="kbd-list">
+      <div><span>Focus the search box</span><kbd>/</kbd></div>
+      <div><span>Move between cards</span><kbd>J</kbd> <kbd>K</kbd></div>
+      <div><span>Open the focused card</span><kbd>Enter</kbd></div>
+      <div><span>Favourite the focused card</span><kbd>F</kbd></div>
+      <div><span>Rate the focused card</span><kbd>1</kbd>–<kbd>5</kbd></div>
+      <div><span>Shuffle a random combination</span><kbd>R</kbd></div>
+      <div><span>Next / previous page</span><kbd>&rarr;</kbd> <kbd>&larr;</kbd></div>
+      <div><span>Close a dialog</span><kbd>Esc</kbd></div>
+      <div><span>This help</span><kbd>?</kbd></div>
+    </div>
+  </div>
+  <div class="modal-foot"><span class="spacer"></span><button class="btn btn-sm btn-primary" id="help-close" type="button" style="width:auto">Close</button></div>
+</dialog>
+
+<!-- ============ EXPORT MODAL ============ -->
+<dialog id="export">
+  <div class="modal-head"><h3 style="margin:0;font-size:20px;letter-spacing:-.02em">Export</h3></div>
+  <div class="modal-body">
+    <p style="margin:0;color:var(--muted);font-size:14px">Choose what to save and in which format. The backup file is the one to use when moving to another browser.</p>
+    <label class="field" style="margin:0" for="x-scope"><span>What to export</span>
+      <select id="x-scope">
+        <option value="filtered">The combinations currently shown</option>
+        <option value="fav">My favourites only</option>
+        <option value="all">All 600 combinations</option>
+      </select>
+    </label>
+    <label class="field" style="margin:0" for="x-format"><span>Format</span>
+      <select id="x-format">
+        <option value="csv">CSV spreadsheet</option>
+        <option value="md">Markdown list</option>
+        <option value="json">JSON</option>
+        <option value="backup">Backup of my favourites, ratings and notes</option>
+      </select>
+    </label>
+  </div>
+  <div class="modal-foot">
+    <span class="spacer"></span>
+    <button class="btn btn-sm" id="x-cancel" type="button">Cancel</button>
+    <button class="btn btn-sm btn-primary" id="x-go" type="button" style="width:auto">Download</button>
+  </div>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<noscript><p style="padding:24px">This tool needs JavaScript to decrypt and display the combination library.</p></noscript>
+<script src="app.js"></script>
+</body>
+</html>
