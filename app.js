@@ -18,6 +18,7 @@ const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 const STORE_KEY = 'pcs.prefs.v1';
 const THEME_KEY = 'pcs.theme';
 const PASS_KEY = 'pcs.pass';
+const UI_KEY = 'pcs.ui.v1';
 const VAULT_URL = 'data/vault.json';
 
 /* ---------------------------------------------------------------- state -- */
@@ -191,6 +192,40 @@ $('#toggle-pw').addEventListener('click', () => {
 
 /* ------------------------------------------------------------ app start -- */
 
+function saveUiState() {
+  try {
+    localStorage.setItem(UI_KEY, JSON.stringify({
+      query: $('#query').value, action: $('#action').value, payoff: $('#payoff').value,
+      sort: $('#sort').value, pageSize: state.pageSize, listView: state.listView,
+      filters: state.filters, view: state.view === 'favourites' ? 'favourites' : 'browse',
+    }));
+  } catch (_) {}
+}
+
+function restoreUiState() {
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(UI_KEY) || 'null'); } catch (_) {}
+  if (!saved) return null;
+  $('#query').value = saved.query || '';
+  $('#action').value = saved.action || '';
+  $('#payoff').value = saved.payoff || '';
+  $('#sort').value = saved.sort || 'id';
+  state.pageSize = saved.pageSize || 24;
+  $('#page-size').value = String(state.pageSize);
+  state.listView = Boolean(saved.listView);
+  $('#view-toggle').textContent = state.listView ? 'Card view' : 'List view';
+  Object.assign(state.filters, saved.filters || {});
+  $$('.chip').forEach((chip) => chip.setAttribute('aria-pressed', String(Boolean(state.filters[chip.dataset.filter]))));
+  return saved;
+}
+
+/* A link like …/index.html#c=241 opens that combination once unlocked. */
+function linkedCombination() {
+  const match = /[#&]c=(\d{1,3})\b/.exec(location.hash);
+  const id = match ? Number(match[1]) : 0;
+  return id >= 1 && id <= 600 ? id : 0;
+}
+
 function startApp(data) {
   state.data = data;
   state.rows = data.rows.map((row) => ({
@@ -209,9 +244,17 @@ function startApp(data) {
     data.payoffs.forEach((p, i) => payoffSel.add(new Option((i + 31) + '. ' + p[0], String(i + 31))));
   }
 
+  const saved = restoreUiState();
   buildMatrix();
-  render();
+  if (saved && saved.view === 'favourites') setView('favourites'); else render();
   document.addEventListener('keydown', onKeydown);
+
+  const linked = linkedCombination();
+  if (linked) openDetail(linked);
+  window.addEventListener('hashchange', () => {
+    const id = linkedCombination();
+    if (id) openDetail(id);
+  });
 }
 
 /* ------------------------------------------------------------ filtering -- */
@@ -490,6 +533,11 @@ function stepDetail(delta) {
 $('#d-prev').addEventListener('click', () => stepDetail(-1));
 $('#d-next').addEventListener('click', () => stepDetail(1));
 $('#d-copy').addEventListener('click', () => copyRow(rowById(state.detailId)));
+$('#d-link').addEventListener('click', () => {
+  const url = location.origin + location.pathname + '#c=' + state.detailId;
+  navigator.clipboard?.writeText(url).then(() => toast('Link to #' + pad(state.detailId) + ' copied.'),
+    () => toast('The browser blocked clipboard access.'));
+});
 $('#d-close').addEventListener('click', () => detail.close());
 detail.addEventListener('close', () => { flushDetailInputs(); refreshCard(state.detailId); editingId = null; });
 
@@ -579,13 +627,13 @@ function setView(view) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-$$('.tab').forEach((tab) => tab.addEventListener('click', () => setView(tab.dataset.view)));
+$$('.tab').forEach((tab) => tab.addEventListener('click', () => { setView(tab.dataset.view); saveUiState(); }));
 
 /* -------------------------------------------------------------- filters -- */
 
-$('#query').addEventListener('input', debounce(() => { state.page = 0; render(); }, 140));
-['#action', '#payoff', '#sort'].forEach((sel) => $(sel).addEventListener('change', () => { state.page = 0; render(); }));
-$('#page-size').addEventListener('change', (e) => { state.pageSize = Number(e.target.value); state.page = 0; render(); });
+$('#query').addEventListener('input', debounce(() => { state.page = 0; render(); saveUiState(); }, 140));
+['#action', '#payoff', '#sort'].forEach((sel) => $(sel).addEventListener('change', () => { state.page = 0; render(); saveUiState(); }));
+$('#page-size').addEventListener('change', (e) => { state.pageSize = Number(e.target.value); state.page = 0; render(); saveUiState(); });
 
 $('#chipbar').addEventListener('click', (e) => {
   const chip = e.target.closest('.chip');
@@ -595,6 +643,7 @@ $('#chipbar').addEventListener('click', (e) => {
   chip.setAttribute('aria-pressed', String(state.filters[key]));
   state.page = 0;
   render();
+  saveUiState();
 });
 
 $('#clear-filters').addEventListener('click', () => {
@@ -606,6 +655,7 @@ $('#clear-filters').addEventListener('click', () => {
   $$('.chip').forEach((c) => c.setAttribute('aria-pressed', 'false'));
   state.page = 0;
   render();
+  saveUiState();
 });
 
 $$('[data-page]').forEach((btn) => btn.addEventListener('click', () => {
@@ -618,6 +668,7 @@ $('#view-toggle').addEventListener('click', () => {
   state.listView = !state.listView;
   $('#view-toggle').textContent = state.listView ? 'Card view' : 'List view';
   render();
+  saveUiState();
 });
 
 $('#theme-btn').addEventListener('click', () => {

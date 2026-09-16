@@ -93,6 +93,12 @@
     <div class="resultbar">
       <p class="count" id="count"></p>
       <div class="toolbtns">
+        <select id="page-size" aria-label="Results per page" class="inline-select">
+          <option value="24">24 per page</option>
+          <option value="48">48 per page</option>
+          <option value="96">96 per page</option>
+          <option value="600">Show all</option>
+        </select>
         <button class="btn btn-sm" id="view-toggle" type="button">List view</button>
         <button class="btn btn-sm" id="export-btn" type="button">Export</button>
         <button class="btn btn-sm" id="import-btn" type="button">Import</button>
@@ -106,12 +112,6 @@
       <button class="btn btn-sm" data-page="prev" type="button">&larr; Previous</button>
       <span class="pagenum" id="pagenum"></span>
       <button class="btn btn-sm" data-page="next" type="button">Next &rarr;</button>
-      <select id="page-size" aria-label="Results per page" style="width:auto;min-width:110px">
-        <option value="24">24 per page</option>
-        <option value="48">48 per page</option>
-        <option value="96">96 per page</option>
-        <option value="600">Show all</option>
-      </select>
     </div>
   </section>
 
@@ -179,6 +179,7 @@
     <button class="btn btn-sm" id="d-next" type="button">Next &rarr;</button>
     <span class="spacer"></span>
     <button class="btn btn-sm" id="d-copy" type="button">Copy</button>
+    <button class="btn btn-sm" id="d-link" type="button">Copy link</button>
     <button class="btn btn-sm btn-primary" id="d-close" type="button" style="width:auto">Done</button>
   </div>
 </dialog>
@@ -197,6 +198,7 @@
       <div><span>Next / previous page</span><kbd>&rarr;</kbd> <kbd>&larr;</kbd></div>
       <div><span>Close a dialog</span><kbd>Esc</kbd></div>
       <div><span>This help</span><kbd>?</kbd></div>
+      <div><span>Link straight to a combination</span><kbd>#c=241</kbd></div>
     </div>
   </div>
   <div class="modal-foot"><span class="spacer"></span><button class="btn btn-sm btn-primary" id="help-close" type="button" style="width:auto">Close</button></div>

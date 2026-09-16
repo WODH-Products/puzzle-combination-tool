@@ -18,6 +18,9 @@ Live site: enable GitHub Pages on this repository, then open the Pages URL.
   a prompt rather than a list.
 - **Export** the current selection, your favourites, or all 600 as CSV, Markdown or JSON, plus
   a backup file of your favourites, ratings and notes that you can **import** on another machine.
+- **Link to one idea**: Copy link inside any combination gives you a URL ending `#c=241` that
+  opens straight to it after unlocking.
+- Filters, sort order, page size and the tab you were on are remembered between visits.
 - Light and dark themes, keyboard shortcuts (press `?`), and a print stylesheet.
 
 ## Sign-in
