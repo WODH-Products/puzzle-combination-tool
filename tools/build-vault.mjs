@@ -14,7 +14,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const ITERATIONS = 250000;
+const ITERATIONS = 600000;
 
 const password = process.argv[2];
 if (!password) {

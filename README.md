@@ -31,7 +31,7 @@ Live site: enable GitHub Pages on this repository, then open the Pages URL.
 
 The site is static, so there is no server to check a password against. Instead the combination
 library ships **encrypted**: `data/vault.json` is the dataset sealed with AES-256-GCM under a key
-derived from the password with PBKDF2-SHA256 (250,000 iterations). Entering the password derives
+derived from the password with PBKDF2-SHA256 (600,000 iterations). Entering the password derives
 the key and decrypts the library in the browser. A wrong password fails the authentication tag and
 nothing is revealed.
 
