@@ -56,9 +56,9 @@ function savePrefs() {
 }
 
 const isFav = (id) => Boolean(prefs.favourites[id]);
-const ratingOf = (id) => prefs.ratings[id] || 0;
-const noteOf = (id) => prefs.notes[id] || '';
-const tagsOf = (id) => prefs.tags[id] || [];
+const ratingOf = (id) => Number(prefs.ratings[id]) || 0;
+const noteOf = (id) => (typeof prefs.notes[id] === 'string' ? prefs.notes[id] : '');
+const tagsOf = (id) => (Array.isArray(prefs.tags[id]) ? prefs.tags[id] : []);
 
 /* ----------------------------------------------------------------- misc -- */
 
@@ -344,7 +344,7 @@ function render() {
 function renderStats() {
   const favCount = Object.keys(prefs.favourites).length;
   const rated = Object.keys(prefs.ratings).filter((k) => prefs.ratings[k]).length;
-  const noted = Object.keys(prefs.notes).filter((k) => prefs.notes[k].trim()).length;
+  const noted = Object.keys(prefs.notes).filter((k) => String(prefs.notes[k] || '').trim()).length;
   const seen = Object.keys(prefs.seen).length;
   const items = [
     ['600', 'combinations'],
@@ -739,6 +739,26 @@ $('#x-go').addEventListener('click', () => {
 
 /* --------------------------------------------------------------- import -- */
 
+/* Imported files are treated as untrusted: only well-formed entries for real
+   combination ids are kept, so one bad value cannot break the rest of the app. */
+function mergePrefs(current, incoming) {
+  const merged = { favourites: { ...current.favourites }, ratings: { ...current.ratings },
+    notes: { ...current.notes }, tags: { ...current.tags }, seen: { ...current.seen } };
+  const validId = (key) => Number.isInteger(Number(key)) && Number(key) >= 1 && Number(key) <= 600;
+  const each = (key, fn) => Object.entries(incoming[key] || {}).forEach(([id, value]) => {
+    if (validId(id)) fn(id, value);
+  });
+  each('favourites', (id, v) => { const t = Number(v); merged.favourites[id] = Number.isFinite(t) && t > 0 ? t : Date.now(); });
+  each('seen', (id, v) => { const t = Number(v); merged.seen[id] = Number.isFinite(t) && t > 0 ? t : Date.now(); });
+  each('ratings', (id, v) => { const n = Math.round(Number(v)); if (n >= 1 && n <= 5) merged.ratings[id] = n; });
+  each('notes', (id, v) => { if (typeof v === 'string' && v.trim()) merged.notes[id] = v.slice(0, 4000); });
+  each('tags', (id, v) => {
+    const tags = (Array.isArray(v) ? v : []).filter((t) => typeof t === 'string' && t.trim()).map((t) => t.trim().slice(0, 40)).slice(0, 8);
+    if (tags.length) merged.tags[id] = tags;
+  });
+  return merged;
+}
+
 $('#import-btn').addEventListener('click', () => $('#import-file').click());
 $('#import-file').addEventListener('change', async (event) => {
   const file = event.target.files[0];
@@ -747,9 +767,7 @@ $('#import-file').addEventListener('change', async (event) => {
     const parsed = JSON.parse(await file.text());
     const incoming = parsed.prefs || parsed;
     if (!incoming || typeof incoming !== 'object' || !('favourites' in incoming)) throw new Error('shape');
-    ['favourites', 'ratings', 'notes', 'tags', 'seen'].forEach((key) => {
-      Object.assign(prefs[key], incoming[key] || {});
-    });
+    Object.assign(prefs, mergePrefs(prefs, incoming));
     savePrefs();
     $$('#matrix .cell').forEach(paintCell);
     render();
