@@ -65,8 +65,13 @@ python3 -m http.server 8000
 
 ## Deploying to GitHub Pages
 
-Push this repository, then in **Settings → Pages** set the source to the `main` branch, root
-folder. The site is plain HTML, CSS and JavaScript with no build step. `.nojekyll` keeps Pages
+```bash
+gh auth login          # once, if the GitHub CLI is not signed in yet
+./tools/publish.sh     # creates a private repo, pushes, enables Pages
+```
+
+Or by hand: push the repository, then in **Settings → Pages** set the source to the `main`
+branch, root folder. The site is plain HTML, CSS and JavaScript with no build step. `.nojekyll` keeps Pages
 from reprocessing the files.
 
 To keep the library off the public web entirely, make the repository private and use Pages on a
@@ -83,6 +88,7 @@ encrypted vault is downloadable by anyone; the password is what stops them readi
 | `data/combinations.json` | The readable source dataset, git-ignored on purpose |
 | `data/vault.json` | The encrypted dataset the site actually loads |
 | `tools/build-vault.mjs` | Re-encrypts the source dataset under a new password |
+| `tools/publish.sh` | Creates the GitHub repository and switches Pages on |
 
 ## The source dataset
 
