@@ -5,6 +5,8 @@ payoffs, each pair written up as a one-line mechanic.
 
 Live site: enable GitHub Pages on this repository, then open the Pages URL.
 
+![The browse view: filters, stat tiles and combination cards](assets/screenshot-browse.png)
+
 ## What it does
 
 - **Browse** all 600 combinations as cards or as a dense list, with search-term highlighting.
@@ -22,6 +24,8 @@ Live site: enable GitHub Pages on this repository, then open the Pages URL.
   opens straight to it after unlocking.
 - Filters, sort order, page size and the tab you were on are remembered between visits.
 - Light and dark themes, keyboard shortcuts (press `?`), and a print stylesheet.
+
+![The matrix view: thirty actions down, twenty payoffs across](assets/screenshot-matrix.png)
 
 ## Sign-in
 
